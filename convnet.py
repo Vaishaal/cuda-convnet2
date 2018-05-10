@@ -26,6 +26,7 @@ from convdata import ImageDataProvider, CIFARDataProvider, DummyConvNetLogRegDat
 from os import linesep as NL
 import copy as cp
 import os
+import numpy as np
 
 class Driver(object):
     def __init__(self, convnet):
@@ -54,9 +55,12 @@ class MultiviewTestDriver(TrainingDriver):
             TrainingDriver.on_start_batch(self, batch_data, train)
         else:
             data = batch_data[2]
+	    print(data[1])
+	    self.labels = data[1]
             num_views = self.convnet.test_data_provider.num_views
             if self.convnet.test_out != "" and self.convnet.logreg_name != "":
                 self.write_output = True
+		print("WRTITING OUTPUT")
                 self.test_file_name = os.path.join(self.convnet.test_out, 'test_preds_%d' % batch_data[1])
                 self.probs = n.zeros((data[0].shape[1]/num_views, self.convnet.test_data_provider.get_num_classes()), dtype=n.single)
                 self.convnet.libmodel.startMultiviewTest(data, num_views, self.probs, self.convnet.logreg_name)
@@ -67,6 +71,10 @@ class MultiviewTestDriver(TrainingDriver):
         if self.write_output:
             if not os.path.exists(self.convnet.test_out):
                 os.makedirs(self.convnet.test_out)
+            print("PROB SUM", np.sum(self.probs))
+	    print(np.argmax(self.probs, axis=1))
+	    print(self.probs.shape)
+	    np.save(self.test_file_name + ".npy", self.probs)
             pickle(self.test_file_name,  {'data': self.probs,
                                           'note': 'generated from %s' % self.convnet.save_file})
 
@@ -238,6 +246,8 @@ class ConvNet(IGPUModel):
         self.save_state()
         
     def aggregate_test_outputs(self, test_outputs):
+	print("TEST OUTPUT CONVNET")
+	print(test_outputs)
         test_outputs = cp.deepcopy(test_outputs)
         num_cases = sum(t[1] for t in test_outputs)
         for i in xrange(1 ,len(test_outputs)):

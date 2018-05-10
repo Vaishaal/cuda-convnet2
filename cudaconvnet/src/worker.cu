@@ -185,18 +185,18 @@ void MultiviewTestWorker::_run() {
             _convNet->fprop(getMinibatch(_numViews - 1, i), p, PASS_MULTIVIEW_TEST_END);
             _convNet->getCost(batchCost);
         }
-//        if (_cpuProbs != NULL) {
-//            LogregCostLayer& logregLayer = *dynamic_cast<LogregCostLayer*>(&_convNet->getLayer(_logregName, 0));
-//            NVMatrix::setDeviceID(logregLayer.getDeviceID());
-//            Matrix& miniProbs = _cpuProbs->sliceRows(i * _dp->getMinibatchSize(),
-//                                                     min(numCasesReal, (i + 1) * _dp->getMinibatchSize()));
-//            NVMatrix& acts = logregLayer.getProbsAccum();
-//            NVMatrix acts_T;
-//            acts.transpose(acts_T);
-//            acts_T.copyToHost(miniProbs);
-//
-//            delete &miniProbs;
-//        }
+	if (_cpuProbs != NULL) {
+	LogregCostLayer& logregLayer = *dynamic_cast<LogregCostLayer*>(&_convNet->getLayer(_logregName, 0));
+	NVMatrix::setDeviceID(logregLayer.getDeviceID());
+	Matrix& miniProbs = _cpuProbs->sliceRows(i * _dp->getMinibatchSize(),
+	min(numCasesPerView, (i + 1) * _dp->getMinibatchSize()));
+	NVMatrix& acts = logregLayer.getProbsAccum(0);
+	NVMatrix acts_T;
+	acts.transpose(acts_T);
+	acts_T.copyToHost(miniProbs);
+
+	delete &miniProbs;
+	}
     }
     _convNet->getResultQueue().enqueue(new WorkResult(WorkResult::BATCH_DONE, batchCost));
 }

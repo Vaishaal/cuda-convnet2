@@ -235,11 +235,18 @@ class IGPUModel:
             print "\tTest error > %g, not saving." % self.max_test_err,
     
     def aggregate_test_outputs(self, test_outputs):
+	print("test output\n")
+	print(test_outputs)
+	print(type(test_outputs))
         test_error = tuple([sum(t[r] for t in test_outputs) / (1 if self.test_one else len(self.test_batch_range)) for r in range(len(test_outputs[-1]))])
+ 	print("test error", test_error)
         return test_error
     
     def get_test_error(self):
         next_data = self.get_next_batch(train=False)
+ 	print(next_data[2][0].shape)
+ 	print(next_data[2][1].shape)
+ 	print(len(next_data))
         test_outputs = []
         while True:
             data = next_data
@@ -255,7 +262,9 @@ class IGPUModel:
             if not load_next:
                 break
             sys.stdout.flush()
-            
+        print("AGGREGATING TEST OUTPUTS\n") 
+	print(type(test_outputs))
+	print(test_outputs)
         return self.aggregate_test_outputs(test_outputs)
     
     def set_var(self, var_name, var_val):
